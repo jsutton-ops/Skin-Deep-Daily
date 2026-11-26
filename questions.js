@@ -865,3 +865,55 @@ Q(`Skin health`, `Which nutrient-rich foods help support healthy skin?`,
  `Add diet to your lifestyle factors mind map with an example food for each skin vitamin (A, C, E) and for essential fatty acids.`)
 ];
 })();
+
+/* ==================================================================
+   DAILY SELF-CARE TIPS
+   One tip is shown on the results screen each day, in order, and the
+   list starts again from the top when it runs out. Edit, add or remove
+   tips freely: each is [title, tip]. supportText appears under the tip.
+================================================================== */
+window.SKIN_SELFCARE = {
+  supportText: `Feeling stressed or low for more than a day or two? Talk to your tutor or your college's student support team. You don't have to sort it out on your own.`,
+  tips: [
+  [`Set a finish time`, `Decide when today's study ends, such as 8pm, and stick to it. Knowing there is a stopping point makes it easier to focus now and relax later.`],
+  [`Put your phone in another room`, `For the last 30 minutes before bed, leave your phone charging outside your bedroom. Your brain switches off faster without notifications and scrolling.`],
+  [`Get outside for ten minutes`, `A short walk in daylight lifts your mood and clears your head. No headphones needed. Just notice what you can see and hear.`],
+  [`Try box breathing`, `Breathe in for 4 counts, hold for 4, breathe out for 4, hold for 4. Repeat four times. It calms your nervous system in about a minute.`],
+  [`Close the books, literally`, `When you finish studying, pack your notes and kit away out of sight. A clear space tells your brain that work time is over.`],
+  [`Move your body`, `Dance to three songs, stretch, or go for a quick jog. Moving helps your body burn off stress hormones built up during the day.`],
+  [`Do one thing just for fun`, `Spend 20 minutes on something with no goal: drawing, gaming, baking or a favourite show. Fun is not wasted time. It helps you recharge.`],
+  [`Have a proper drink of water`, `Tiredness and headaches are often a sign of being dehydrated. Have a glass of water now and keep a bottle with you tomorrow.`],
+  [`Write it down, then let it go`, `If your mind keeps buzzing, write down everything you are worrying about or need to do tomorrow. Once it is on paper, you don't have to hold it in your head.`],
+  [`Talk to someone`, `Message or call a friend or family member and talk about anything except college. A good chat is one of the quickest ways to switch off.`],
+  [`Keep a steady bedtime`, `Going to bed and getting up at roughly the same time each day, even at weekends, helps you sleep better and feel more awake in class.`],
+  [`Give yourself a pamper`, `You are learning skincare for others, so try it on yourself. A warm shower, a cleanse and a moisturise can be a calming end to the day.`],
+  [`Notice three good things`, `Before bed, think of three things that went well today, however small. It trains your brain to notice the positives, not just the stress.`],
+  [`Take screen breaks`, `For every hour on a screen, take five minutes away from it. Look into the distance, stretch your neck and shoulders, and rest your eyes.`],
+  [`Eat something proper`, `Skipping meals makes it harder to concentrate and easier to feel stressed. Try to have a balanced meal with some fruit or vegetables today.`],
+  [`Listen to something calming`, `Put on a playlist, podcast or audiobook you enjoy and do nothing else for 15 minutes. Let your mind wander.`],
+  [`Tidy one small space`, `Clear your bag, your desk or one shelf. It takes five minutes and a tidy space can make your mind feel calmer too.`],
+  [`Relax your muscles`, `Lying down, tense your toes for five seconds, then let go. Work up through your legs, tummy, shoulders, hands and face. Notice how heavy and relaxed you feel.`],
+  [`Say no to comparing`, `Everyone learns at a different pace. Compare yourself only with where you were last month, not with other people on social media or in class.`],
+  [`Plan something to look forward to`, `Put something fun in your diary this week, like a film, a walk with a friend or a favourite meal. Having something to look forward to helps on busy days.`],
+  [`Do a five-minute reset`, `Feeling overwhelmed? Stop, sit somewhere quiet and name five things you can see, four you can hear, three you can touch, two you can smell and one you can taste.`],
+  [`Have a caffeine cut-off`, `Energy drinks and coffee late in the day can keep you awake. Try not to have caffeine after about 3pm so you can sleep properly.`],
+  [`Laugh on purpose`, `Watch a funny video or comedy show, or swap jokes with friends. Laughing lowers stress and gives your mood a quick boost.`],
+  [`Get some fresh air in your room`, `Open a window for ten minutes before you go to sleep. A cooler, fresher room helps you fall asleep more easily.`],
+  [`Be kind to yourself`, `If today did not go to plan, talk to yourself the way you would talk to a friend. One hard day does not undo all your progress.`],
+  [`Try a creative break`, `Doodle, colour, write a few lines or try a new nail design on yourself. Creative hobbies use a different part of your brain from studying.`],
+  [`Stretch it out`, `Standing at a couch or a nail desk all day is tiring. Roll your shoulders, stretch your arms above your head and gently twist from side to side.`],
+  [`Mute the group chat`, `It's fine to mute busy group chats in the evening. You can catch up tomorrow, and you will be calmer for it.`],
+  [`Spend time with an animal`, `If you have a pet, or know someone who does, spend some time with them. Stroking an animal can lower stress and help you feel calmer.`],
+  [`Celebrate small wins`, `You finished today's questions. That counts. Give yourself credit for the effort, not just the score.`],
+  [`Wind down with a routine`, `Do the same few things each night, like a shower, skincare, a book and then lights off. Your body learns that this routine means it's time to sleep.`],
+  [`Ask for help early`, `If something at college or at home is worrying you, tell someone you trust sooner rather than later. Problems usually feel smaller once they are shared.`],
+  [`Have a tech-free meal`, `Eat one meal today without your phone. Notice the taste, chat with whoever you are with, or just enjoy the quiet.`],
+  [`Get some daylight early`, `Try to get outside or near a window soon after you wake up. Morning light helps set your body clock, so you feel sleepy at the right time at night.`],
+  [`Make a "done" list`, `Instead of only writing to-do lists, write down what you did today. It's a good reminder of how much you actually get done.`],
+  [`Breathe out longer`, `Breathe in through your nose for 4 counts and out through your mouth for 6 to 8 counts. Longer breaths out help your body relax.`],
+  [`Rest is part of learning`, `Your brain stores what you have learned while you sleep and rest. Taking a proper break tonight helps today's revision stick.`],
+  [`Keep your bed for sleep`, `Try not to study or scroll in bed. If your bed is only for sleeping, your brain links it with rest and you drop off more easily.`],
+  [`Get creative with music`, `Make a playlist called "switch off" with songs that make you feel calm or happy. Play it when you finish studying.`],
+  [`Check in with yourself`, `Ask yourself: how am I feeling, and what do I need right now? It might be food, rest, a chat or some time alone. Then try to give yourself that.`]
+  ]
+};
