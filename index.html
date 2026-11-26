@@ -159,9 +159,6 @@ svg .lbl.small{font-size:9.5px;font-weight:400}
 @media (prefers-reduced-motion: reduce){.anim{animation:none}.opt,svg .grp{transition:none}}
 
 @media (max-width:760px){
-  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}
-  .stat{min-width:0;padding:8px 10px}
-  .stat small{font-size:.7rem}
   .intro{grid-template-columns:1fr;gap:20px}
   .intro .diagram{order:-1}
   .play{grid-template-columns:1fr}
@@ -171,13 +168,6 @@ svg .lbl.small{font-size:9.5px;font-weight:400}
   .mrow{grid-template-columns:110px minmax(0,1fr) 52px}
   .review .body{padding:0 16px 16px 16px}
 }
-
-.chips.tight{margin-top:0}
-.chip.rv{background:var(--tip);color:var(--ink);box-shadow:inset 0 0 0 1px var(--tip-line)}
-.chip.sm{font-size:.7rem;padding:2px 8px;vertical-align:middle}
-.gapnote{font-size:.92rem;font-weight:700;color:var(--accent)}
-.muted{color:var(--muted)}
-.plan .gq{display:block;font-weight:700;margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -191,146 +181,374 @@ svg .lbl.small{font-size:9.5px;font-weight:400}
       <div class="stat"><b id="st-streak">0</b><small>day streak</small></div>
       <div class="stat"><b id="st-days">0</b><small>sets done</small></div>
       <div class="stat"><b id="st-acc">–</b><small>all-time score</small></div>
-      <div class="stat"><b id="st-gaps">0</b><small>gaps to close</small></div>
     </div>
   </header>
   <main id="app" tabindex="-1"></main>
   <footer class="foot">
-    <span>A new set every weekday at 4:00pm UK time, September to May. Your progress is saved in this browser on this device.</span>
+    <span>5 new questions every day at 4:00pm UK time. Your progress is saved in this browser on this device.</span>
     <span id="reset-zone"><button class="linkbtn" id="reset-btn" type="button">Reset my progress</button></span>
   </footer>
   <div class="sr" aria-live="polite" id="live"></div>
 </div>
 
-<script src="questions.js"></script>
 <script>
 (function(){
 "use strict";
-const app = document.getElementById('app'), live = document.getElementById('live');
-const BANK = window.SKIN_QUESTIONS || [];
-const CFG = Object.assign({reviewPerDay:3, sharedPerDay:5, resetHour:16, closedDates:[]}, window.SKIN_CONFIG || {});
-if (!BANK.length){
-  app.innerHTML = '<section class="qcard"><h2>The questions did not load</h2><p style="margin-top:8px">Make sure the file <b>questions.js</b> is in the same folder as this page, then refresh.</p></section>';
-  return;
-}
 
 /* ------------------------------------------------------------------
-   ACADEMIC YEAR CALENDAR
-   A new set opens at 4pm (UK time) every weekday from September to May.
-   Friday's set stays open over the weekend. June to August and any
-   closedDates in questions.js show a break screen.
+   QUESTION BANK
+   Each entry: topic, question, options (the FIRST option is the
+   correct answer; options are shuffled on screen), explanation,
+   further-study advice shown when the learner gets it wrong.
+   Add new questions to the END of the list.
 ------------------------------------------------------------------- */
-const TZ = 'Europe/London', DAY = 864e5, PER = CFG.sharedPerDay;
-const fmtParts = new Intl.DateTimeFormat('en-GB', {timeZone:TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'});
-function london(t){ const p = {}; fmtParts.formatToParts(t).forEach(x => p[x.type] = x.value); return {y:+p.year, m:+p.month, d:+p.day, h:(+p.hour)%24}; }
-const dn = (y, m, d) => Date.UTC(y, m-1, d) / DAY;
-const utc = n => new Date(n * DAY);
-const closed = (CFG.closedDates || []).map(r => [Date.parse(r[0] + 'T00:00:00Z') / DAY, Date.parse((r[1] || r[0]) + 'T00:00:00Z') / DAY]).filter(r => !isNaN(r[0]) && !isNaN(r[1]));
-const isClosedDay = n => closed.some(r => n >= r[0] && n <= r[1]);
-const weekday = n => utc(n).getUTCDay();
-const inTerm = n => { const m = utc(n).getUTCMonth() + 1; return m >= 9 || m <= 5; };
-const isSetDay = n => inTerm(n) && weekday(n) !== 0 && weekday(n) !== 6 && !isClosedDay(n);
-const yearStart = n => { const d = utc(n); return d.getUTCMonth() + 1 >= 9 ? d.getUTCFullYear() : d.getUTCFullYear() - 1; };
+const Q = (t, q, o, e, s) => ({t, q, o, e, s});
+const BANK = [
+// ---- Epidermis ----
+Q(`Epidermis`, `What is the outermost layer of the epidermis?`,
+ [`Stratum corneum`, `Stratum germinativum`, `Stratum spinosum`, `Stratum granulosum`],
+ `The stratum corneum (horny layer) is the surface layer. It is made of flat, dead cells filled with keratin that overlap like roof tiles and are constantly shed.`,
+ `Re-learn the five epidermal layers in order. From the surface down, try the memory aid "Come Let's Get Sun Burnt": Corneum, Lucidum, Granulosum, Spinosum, Basale (germinativum). Say it out loud, then write the layers from memory.`),
+Q(`Epidermis`, `In which layer of the epidermis do new skin cells divide (mitosis)?`,
+ [`Stratum germinativum (basal layer)`, `Stratum corneum`, `Stratum lucidum`, `Stratum granulosum`],
+ `The stratum germinativum, also called the basal layer, is the deepest layer of the epidermis. Its cells divide to make new cells that push upwards towards the surface.`,
+ `Remember that "germinate" means to start growing, so the germinativum is where new cells are born. Draw the epidermis and add an arrow showing cells moving up from the basal layer to the surface.`),
+Q(`Epidermis`, `Which layer of the epidermis is only found in thick skin, such as the palms and the soles of the feet?`,
+ [`Stratum lucidum`, `Stratum spinosum`, `Stratum germinativum`, `Papillary layer`],
+ `The stratum lucidum ("clear layer") is a thin, see-through layer that only appears in thick skin on the palms and soles, where extra protection is needed.`,
+ `Look at the thick-skin versus thin-skin comparison in your anatomy and physiology notes. Lucidum sounds like "lucid", meaning clear. Note that the papillary layer belongs to the dermis, not the epidermis.`),
+Q(`Epidermis`, `Which cells produce melanin, the pigment that gives skin its colour?`,
+ [`Melanocytes`, `Keratinocytes`, `Fibroblasts`, `Mast cells`],
+ `Melanocytes sit in the basal layer of the epidermis. They make melanin and pass it to the surrounding keratinocytes, where it helps shield the cell nucleus from UV light.`,
+ `Make a flashcard for each skin cell type with its location and job: melanocyte (melanin, basal layer), keratinocyte (keratin, epidermis), fibroblast (collagen and elastin, dermis), mast cell (histamine, dermis).`),
+Q(`Epidermis`, `Roughly how long does it take a new cell to travel from the basal layer to the surface and be shed?`,
+ [`About 28 days`, `About 7 days`, `About 3 months`, `About 1 year`],
+ `In young adult skin the journey takes around 28 days (about four weeks). This slows down as we get older, which is one reason mature skin can look dull.`,
+ `Review the process of keratinisation. Link it to treatments: regular exfoliation helps remove the dead cells at the end of this 28-day cycle, and it is the reason we advise clients on home care between appointments.`),
+Q(`Epidermis`, `Which protein makes the cells of the stratum corneum tough and waterproof?`,
+ [`Keratin`, `Collagen`, `Elastin`, `Melanin`],
+ `Keratin is a tough, fibrous protein. As cells move up through the epidermis they fill with keratin (keratinisation), so the surface layer becomes a hard-wearing, water-resistant barrier.`,
+ `Sort these four into two groups: "found in the epidermis" (keratin, melanin) and "found in the dermis" (collagen, elastin). Keratin is also what hair and nails are made of, which can help you remember it.`),
+Q(`Epidermis`, `Which epidermal layer is known as the "prickle cell" layer and contains Langerhans cells?`,
+ [`Stratum spinosum`, `Stratum granulosum`, `Stratum lucidum`, `Stratum corneum`],
+ `The stratum spinosum sits just above the basal layer. Its cells are joined by spiny-looking connections, and it contains Langerhans cells, which help the immune system.`,
+ `"Spinosum" sounds like "spiny", which matches its prickly look. Go back over the epidermis layers and write one key fact next to each one.`),
+Q(`Epidermis`, `What is happening to cells in the stratum granulosum?`,
+ [`They fill with granules and begin to die as keratinisation continues`, `They divide rapidly to make new cells`, `They produce sebum to soften the skin`, `They are absorbed back into the bloodstream`],
+ `In the granular layer the cells flatten, fill with granules (which help form keratin) and lose their nucleus. This is the point where the cells begin to die.`,
+ `Granulosum sounds like "granules". Trace the life of a skin cell from bottom to top: born (germinativum), prickly (spinosum), grainy and dying (granulosum), clear (lucidum), dead and shed (corneum).`),
+Q(`Epidermis`, `What is desquamation?`,
+ [`The natural shedding of dead cells from the skin's surface`, `The production of melanin in the basal layer`, `The growth of new blood vessels in the dermis`, `The release of sweat onto the skin`],
+ `Desquamation is the constant shedding of dead, keratinised cells from the stratum corneum. Exfoliation in a facial speeds this natural process up.`,
+ `Add "desquamation" to your key-terms glossary with your own definition. Then link it to the exfoliation step in a facial: what are we removing and why?`),
+Q(`Epidermis`, `Does the epidermis contain blood vessels?`,
+ [`No, it gets nutrients from blood vessels in the dermis below`, `Yes, it has a large network of capillaries`, `Only in the stratum corneum`, `Only on the face and neck`],
+ `The epidermis has no blood vessels of its own. The basal layer is fed by nutrients and oxygen passing up from capillaries in the dermis. This is why a shallow graze on the surface does not bleed.`,
+ `Look at a labelled cross-section of the skin and find where the capillaries are. Notice they stop at the dermal papillae and do not go up into the epidermis.`),
+Q(`Epidermis`, `What is the main role of Langerhans cells?`,
+ [`They detect harmful substances and help the immune system respond`, `They produce melanin to colour the skin`, `They produce collagen fibres`, `They store fat for energy`],
+ `Langerhans cells are part of the skin's immune defence. They pick up foreign substances and bacteria and alert the immune system. They play a part in allergic reactions, which is one reason we carry out skin tests.`,
+ `Revise the protective function of the skin. Make a mind map called "How skin protects us" and include Langerhans cells, the acid mantle, melanin and keratin.`),
+Q(`Epidermis`, `Which list shows the layers of the epidermis in the correct order, from deepest to the surface?`,
+ [`Germinativum, spinosum, granulosum, lucidum, corneum`, `Corneum, lucidum, granulosum, spinosum, germinativum`, `Germinativum, granulosum, spinosum, corneum, lucidum`, `Spinosum, germinativum, lucidum, granulosum, corneum`],
+ `From the deepest layer up: germinativum (basal), spinosum, granulosum, lucidum, corneum. The second option is the right list but in the wrong direction, from the surface down.`,
+ `Read the question carefully: "deepest to surface" is the opposite way round to "surface to deepest". Practise writing the layers in both directions without looking, and use "Come Let's Get Sun Burnt" read backwards for deepest first.`),
 
-function slotAt(t){
-  const p = london(t); let n = dn(p.y, p.m, p.d); if (p.h < CFG.resetHour) n--;
-  let open = n; const w = weekday(n); if (w === 6) open = n - 1; else if (w === 0) open = n - 2;
-  if (!isSetDay(open)) return {closed:true, reason: inTerm(n) ? 'holiday' : 'summer', key: 'c' + n};
-  const Y = yearStart(open); let k = 0;
-  for (let d = dn(Y, 9, 1); d < open; d++) if (isSetDay(d)) k++;
-  return {closed:false, open, Y, k, serial: (Y - 2020) * 400 + k, weekend: open !== n, key: 's' + open};
-}
-function nextChange(now){
-  const cur = slotAt(now);
-  let t = Math.ceil(now.getTime() / 36e5) * 36e5;
-  for (let i = 0; i < 24 * 130; i++, t += 36e5){ const s = slotAt(new Date(t)); if (s.key !== cur.key && (s.closed !== cur.closed || !s.closed)) return new Date(t); }
-  return new Date(t);
-}
-function nextOpenAt(now){
-  const cur = slotAt(now);
-  let t = Math.ceil(now.getTime() / 36e5) * 36e5;
-  for (let i = 0; i < 24 * 130; i++, t += 36e5){ const s = slotAt(new Date(t)); if (s.key !== cur.key && !s.closed) return new Date(t); }
-  return new Date(t);
-}
-const fmtWhen = new Intl.DateTimeFormat('en-GB', {timeZone:TZ, weekday:'short', day:'numeric', month:'short'});
+// ---- Dermis ----
+Q(`Dermis`, `What are the two layers of the dermis?`,
+ [`Papillary layer and reticular layer`, `Stratum corneum and stratum lucidum`, `Eccrine layer and apocrine layer`, `Adipose layer and muscle layer`],
+ `The dermis has an upper papillary layer, with small bumps (papillae) that lock into the epidermis, and a deeper, thicker reticular layer made of a dense mesh of collagen and elastin.`,
+ `Draw the dermis split into two parts and label them. Papillary = papillae (little bumps). Reticular = "reticulum", meaning a net or mesh of fibres.`),
+Q(`Dermis`, `Which protein fibres give the skin its strength?`,
+ [`Collagen`, `Elastin`, `Keratin`, `Melanin`],
+ `Collagen fibres in the dermis give skin its strength and firmness. Elastin gives it the ability to stretch and spring back. Both are made by fibroblasts.`,
+ `Remember the pair: collagen = strength, elastin = elasticity. Then revise how both decline with age and UV exposure, since this links to skin ageing and mature skin.`),
+Q(`Dermis`, `Which fibres allow the skin to stretch and then return to its normal shape?`,
+ [`Elastin`, `Collagen`, `Keratin`, `Reticulin from the epidermis`],
+ `Elastin fibres act like elastic bands in the dermis, letting the skin stretch and recoil. When elastin breaks down, skin starts to sag.`,
+ `Elastin sounds like "elastic". Try the pinch test on the back of your hand and think about which fibre lets it spring back. Compare young and mature skin in your notes.`),
+Q(`Dermis`, `Which cells in the dermis make collagen and elastin?`,
+ [`Fibroblasts`, `Melanocytes`, `Langerhans cells`, `Adipocytes`],
+ `Fibroblasts are the main cells of the dermis. They produce collagen and elastin fibres and the gel-like substance that surrounds them.`,
+ `Link the name to the job: fibroblasts make fibres. Add fibroblasts to your skin-cells flashcards and include where they are found (dermis).`),
+Q(`Dermis`, `During an allergic reaction, which substance do mast cells release?`,
+ [`Histamine`, `Melanin`, `Sebum`, `Keratin`],
+ `Mast cells in the dermis release histamine when the skin is irritated or reacts to an allergen. Histamine widens blood vessels, which causes redness (erythema), swelling and itching.`,
+ `Revise what happens during a skin reaction and why we carry out skin sensitivity tests before treatments such as lash and brow tinting. Write down what a positive reaction looks like.`),
+Q(`Dermis`, `What do the dermal papillae contain?`,
+ [`Capillary loops and nerve endings that serve the epidermis`, `Sweat that is stored before release`, `Fat cells for insulation`, `Dead, keratinised cells`],
+ `The dermal papillae are small finger-like bumps at the top of the dermis. They carry tiny blood capillaries that feed the epidermis and nerve endings that sense touch. They also form our fingerprints.`,
+ `Study a labelled diagram of the papillary layer. Look at your own fingertips: the ridges are made by the dermal papillae pushing up into the epidermis.`),
+Q(`Dermis`, `What is the reticular layer of the dermis mainly made of?`,
+ [`A dense network of collagen and elastin fibres`, `Adipose (fatty) tissue`, `Flat, dead keratinised cells`, `Melanin granules`],
+ `The reticular layer is the deeper, thicker part of the dermis. Its dense mesh of collagen and elastin gives skin its strength and stretch, and it holds the hair follicles, glands and larger blood vessels.`,
+ `Compare the two dermis layers in a two-column table: what each contains and what each does. Remember that fatty tissue belongs to the subcutaneous layer below.`),
+Q(`Dermis`, `Which sensory nerve endings in the dermis detect light touch?`,
+ [`Meissner's corpuscles`, `Pacinian corpuscles`, `Sebaceous glands`, `Arrector pili muscles`],
+ `Meissner's corpuscles sit near the top of the dermis, in the papillae, and respond to light touch. Pacinian corpuscles sit deeper and respond to pressure and vibration.`,
+ `Make a small table of sensory receptors: Meissner's (light touch, shallow), Pacinian (deep pressure, deep), free nerve endings (pain and temperature). Think about which ones a massage stimulates.`),
+Q(`Dermis`, `What do Pacinian corpuscles respond to?`,
+ [`Deep pressure and vibration`, `Light touch only`, `Ultraviolet light`, `Changes in the skin's pH`],
+ `Pacinian corpuscles are large receptors deep in the dermis. They detect firm pressure and vibration, such as the deeper strokes used in massage.`,
+ `Revise the sensation function of the skin. Picture the depth of each receptor: light touch receptors are high up, pressure receptors are deep down.`),
+Q(`Dermis`, `What is the job of macrophages (histiocytes) in the dermis?`,
+ [`They engulf and destroy bacteria and debris`, `They produce sweat`, `They give the skin its colour`, `They make hairs stand on end`],
+ `Macrophages, also called histiocytes, are defence cells. They swallow up bacteria, dead cells and other debris to keep the skin healthy and help with healing.`,
+ `Add macrophages to your skin-cells flashcards. Compare them with mast cells: both are found in the dermis and both help defend the body, but they do different jobs.`),
+Q(`Dermis`, `Why does skin lose firmness and develop wrinkles as we age?`,
+ [`Fibroblasts make less collagen and elastin`, `Melanocytes make more melanin`, `The epidermis grows thicker`, `Sebaceous glands become overactive`],
+ `With age, and with UV damage and smoking, fibroblasts produce less collagen and elastin and the existing fibres break down. Skin becomes less firm and less elastic, so lines and sagging appear.`,
+ `Revise the factors that affect skin ageing (UV, smoking, diet, hormones, lifestyle). Then link each one to what it does to collagen and elastin in the dermis.`),
+
+// ---- Subcutaneous layer ----
+Q(`Subcutaneous`, `What type of tissue makes up most of the subcutaneous layer?`,
+ [`Adipose (fatty) tissue`, `Dense collagen fibres`, `Keratinised cells`, `Skeletal muscle`],
+ `The subcutaneous layer (hypodermis) is mostly adipose tissue: fat cells held together by loose connective tissue. It sits beneath the dermis.`,
+ `"Sub" means below and "cutaneous" means skin, so subcutaneous means "below the skin". Draw the three main layers and shade the fatty layer at the bottom.`),
+Q(`Subcutaneous`, `Which of these is a function of the subcutaneous layer?`,
+ [`Insulating the body, cushioning it and storing energy`, `Producing vitamin D from sunlight`, `Shedding dead skin cells`, `Producing sebum`],
+ `The fat in the subcutaneous layer keeps body heat in, protects underlying muscles and bones from knocks, and acts as an energy store.`,
+ `Write three bullet points on what the subcutaneous layer does: insulation, protection (cushioning), energy store. Then check which layer is responsible for each of the other three options.`),
+Q(`Subcutaneous`, `Where is the subcutaneous layer found?`,
+ [`Below the dermis and above the muscle`, `Between the epidermis and the dermis`, `On top of the stratum corneum`, `Inside the hair follicle`],
+ `From the surface downwards the order is: epidermis, dermis, then the subcutaneous layer, which attaches the skin to the muscle underneath.`,
+ `Practise labelling a blank skin cross-section from top to bottom. Say the order aloud: epidermis, dermis, subcutaneous, muscle.`),
+Q(`Subcutaneous`, `What are fat cells called?`,
+ [`Adipocytes`, `Fibroblasts`, `Keratinocytes`, `Melanocytes`],
+ `Adipocytes are fat cells. They are the main cells of adipose tissue in the subcutaneous layer.`,
+ `Adipose = fatty, so adipocytes are fat cells ("-cyte" means cell). Use the "-cyte" ending to help remember other cells: keratinocyte, melanocyte.`),
+Q(`Subcutaneous`, `The skin around the eyes is delicate mainly because it…`,
+ [`Is very thin and has very little subcutaneous fat`, `Has more sebaceous glands than anywhere else`, `Has the thickest stratum corneum on the body`, `Contains lots of apocrine sweat glands`],
+ `The eye area has some of the thinnest skin on the body and almost no fatty layer beneath it. This is why it shows lines and puffiness early and needs gentle products and light pressure.`,
+ `Link skin structure to practice: revise why we use specialist eye products and a lighter touch around the eyes during facials and eye treatments.`),
+Q(`Subcutaneous`, `Which statement about the subcutaneous layer is correct?`,
+ [`Its thickness varies across the body and between people`, `It is the same thickness all over the body`, `It contains no blood vessels or nerves`, `It is part of the epidermis`],
+ `The amount of subcutaneous fat varies by body area, sex, age and body weight. It also contains larger blood vessels and nerves that branch up into the dermis.`,
+ `Look at a cross-section diagram and note what passes through the subcutaneous layer: blood vessels, nerves, and the base of some sweat glands and hair follicles.`),
+
+// ---- Appendages ----
+Q(`Appendages`, `What do sebaceous glands produce?`,
+ [`Sebum`, `Sweat`, `Melanin`, `Histamine`],
+ `Sebaceous glands produce sebum, an oily substance that keeps the skin and hair soft and supple and helps waterproof the skin's surface.`,
+ `Make a "glands" flashcard set: sebaceous (sebum, oily), eccrine (watery sweat, cooling), apocrine (thicker sweat, armpits and groin). Test yourself until you can match them quickly.`),
+Q(`Appendages`, `Where do most sebaceous glands release their sebum?`,
+ [`Into the hair follicle`, `Directly onto the palms of the hands`, `Into the bloodstream`, `Into the eccrine sweat duct`],
+ `Most sebaceous glands are attached to hair follicles. Sebum travels up the follicle and out onto the skin's surface through the pore.`,
+ `Find the sebaceous gland on a labelled diagram and trace the route sebum takes to the surface. This links to why blocked follicles cause blackheads (comedones).`),
+Q(`Appendages`, `Which sweat glands are found all over the body and mainly help to control body temperature?`,
+ [`Eccrine glands`, `Apocrine glands`, `Sebaceous glands`, `Lacrimal glands`],
+ `Eccrine glands are found over almost the whole body and open directly onto the skin's surface. They release watery sweat, which cools the body as it evaporates.`,
+ `Compare eccrine and apocrine glands in a table: where they are, where they open, what they release and when they become active.`),
+Q(`Appendages`, `Where are apocrine sweat glands mainly found?`,
+ [`The armpits and groin`, `The palms and soles`, `All over the body`, `The lips and eyelids`],
+ `Apocrine glands are found mainly in the armpits (axillae) and groin. They open into hair follicles and become active at puberty.`,
+ `Revise apocrine glands alongside eccrine glands. Remember: apocrine glands become active at puberty, which is why body odour often starts in the teenage years.`),
+Q(`Appendages`, `Why can sweat from apocrine glands lead to body odour?`,
+ [`Bacteria on the skin break down its fats and proteins`, `It is more acidic than eccrine sweat`, `It contains melanin`, `It mixes with keratin from the hair`],
+ `Fresh apocrine sweat has no smell. It is thicker than eccrine sweat and contains fats and proteins, and when skin bacteria break these down an odour is produced.`,
+ `Look again at the differences between eccrine and apocrine sweat. Link it to client care: this is why hygiene and a clean treatment area matter, especially for waxing the underarms.`),
+Q(`Appendages`, `What happens when the arrector pili muscle contracts?`,
+ [`The hair stands up, causing "goosebumps"`, `Sebum is pushed out of the gland`, `The hair falls out of the follicle`, `Sweat is released to cool the skin`],
+ `The arrector pili is a tiny muscle attached to the hair follicle. When we are cold or scared it contracts, pulling the hair upright. This traps a layer of warm air and creates goosebumps.`,
+ `Find the arrector pili on a labelled diagram. Revise how it links to the heat regulation function of the skin when the body is cold.`),
+Q(`Appendages`, `Which structure at the base of the hair follicle supplies the growing hair with blood and nutrients?`,
+ [`The dermal papilla`, `The arrector pili muscle`, `The sebaceous gland`, `The stratum lucidum`],
+ `The dermal papilla sits at the bottom of the hair follicle. It carries blood capillaries that feed the hair bulb, where the hair grows.`,
+ `Label a diagram of a hair in its follicle: hair shaft, follicle, bulb, dermal papilla, sebaceous gland, arrector pili. This will also help when you study hair removal.`),
+Q(`Appendages`, `Hair, nails and the stratum corneum are all made mainly of which protein?`,
+ [`Keratin`, `Collagen`, `Elastin`, `Melanin`],
+ `Hair, nails and the surface of the skin are all made of keratin. Hair and nails are hard keratin, while the skin has a softer form.`,
+ `Group the skin's appendages (hair, nails, sebaceous glands, sweat glands) and note what each one is made of or produces.`),
+Q(`Appendages`, `Which glands are NOT found on the palms of the hands and soles of the feet?`,
+ [`Sebaceous glands`, `Eccrine sweat glands`, `Sensory nerve endings`, `Blood capillaries`],
+ `There are no sebaceous glands on the palms and soles because there are no hair follicles there. These areas do have lots of eccrine sweat glands, which is why hands and feet can get sweaty.`,
+ `Remember that sebaceous glands usually open into hair follicles. Ask yourself: if an area has no hair, does it need sebaceous glands?`),
+Q(`Appendages`, `Sebum and sweat combine on the surface of the skin to form what?`,
+ [`The acid mantle`, `The stratum lucidum`, `The dermal papillae`, `The hair bulb`],
+ `Sebum and sweat mix to form the acid mantle, a thin, slightly acidic film on the skin. It helps stop bacteria growing and keeps the skin's surface protected.`,
+ `Revise the acid mantle: what it is made of, its pH and how it protects. Then think about why harsh, alkaline soaps can upset it.`),
+Q(`Appendages`, `What is the normal pH of the skin's acid mantle?`,
+ [`About 4.5 to 5.5`, `About 7.0`, `About 8.5 to 9.0`, `About 1.0 to 2.0`],
+ `The acid mantle is slightly acidic, with a pH of roughly 4.5 to 5.5. Neutral is pH 7, so the skin's surface sits on the acidic side.`,
+ `Revise the pH scale (0 to 14, with 7 as neutral). Write "Skin = about 5.5, slightly acidic" in your notes and link it to choosing pH-balanced products.`),
+Q(`Appendages`, `What can overactive sebaceous glands lead to?`,
+ [`Oily skin with enlarged pores and comedones`, `Dry, flaky skin with fine lines`, `Loss of skin colour`, `A thinner epidermis`],
+ `When sebaceous glands produce too much sebum, the skin looks shiny, the pores enlarge and they can become blocked, leading to blackheads (comedones) and spots.`,
+ `Link the appendages to skin types: revise the features of oily skin and how sebum production explains each one.`),
+
+// ---- Functions ----
+Q(`Functions`, `Which list contains the main functions of the skin?`,
+ [`Sensation, heat regulation, absorption, protection, excretion, secretion, vitamin D production`, `Digestion, sensation, circulation, protection, reproduction`, `Respiration, heat regulation, filtration, insulin production`, `Protection, digestion, absorption, hormone storage, circulation`],
+ `The main functions of the skin can be remembered with "SHAPES + V": Sensation, Heat regulation, Absorption, Protection, Excretion, Secretion and Vitamin D production.`,
+ `Learn the memory aid SHAPES + V. Write each letter down the side of a page and add one example for each function. Test yourself until you can do all seven from memory.`),
+Q(`Functions`, `How does the skin help cool the body down when it is too hot?`,
+ [`Blood vessels widen (vasodilation) and sweat evaporates from the skin`, `Blood vessels narrow (vasoconstriction) and goosebumps appear`, `More melanin is produced`, `The subcutaneous layer gets thicker`],
+ `When we overheat, blood vessels in the dermis widen so more heat can escape through the skin (that is why we look flushed), and eccrine glands release sweat, which cools us as it evaporates.`,
+ `Draw two side-by-side diagrams: "too hot" and "too cold". Show what happens to the blood vessels, sweat glands and hair in each.`),
+Q(`Functions`, `How does the skin help keep the body warm when it is cold?`,
+ [`Blood vessels narrow (vasoconstriction) and hairs stand up to trap warm air`, `Blood vessels widen and sweating increases`, `Sebum production stops completely`, `The skin absorbs heat from the air`],
+ `When cold, blood vessels near the surface narrow so less heat is lost, and the arrector pili muscles pull hairs upright to trap a layer of warm air. Shivering also produces heat.`,
+ `Revise vasodilation and vasoconstriction. Tip: "constrict" means squeeze, so vasoconstriction narrows the vessels to hold heat in.`),
+Q(`Functions`, `How does the skin produce vitamin D?`,
+ [`UV light from the sun converts a substance in the skin into vitamin D`, `Sebum turns into vitamin D when it reaches the surface`, `Vitamin D is absorbed from moisturisers`, `Sweat glands make vitamin D when we are hot`],
+ `When UV rays from sunlight reach the skin, they convert a type of cholesterol in the skin into vitamin D. Vitamin D helps the body absorb calcium for healthy bones and teeth.`,
+ `Revise the "V" in SHAPES + V. Note the balance we explain to clients: a little sunlight helps make vitamin D, but too much UV damages the skin, so SPF still matters.`),
+Q(`Functions`, `Which substances does the skin excrete in sweat?`,
+ [`Water, salt and small amounts of waste such as urea`, `Sebum and keratin`, `Melanin and histamine`, `Collagen and elastin`],
+ `Excretion means getting rid of waste. Sweat removes water, salts and small amounts of waste products such as urea, although the kidneys do most of this work.`,
+ `Make sure you can tell excretion and secretion apart: excretion removes waste (sweat), secretion releases a useful substance (sebum).`),
+Q(`Functions`, `Which of these is NOT one of the ways the skin protects the body?`,
+ [`Absorbing everything that is put onto it`, `The acid mantle discourages bacteria`, `Melanin helps shield cells from UV`, `Keratin forms a waterproof barrier`],
+ `The skin is a barrier, so it absorbs very little. It protects us with the acid mantle, melanin, keratin, the immune cells in the skin and the cushioning fat below.`,
+ `Build a "Protection" mind map with the acid mantle, melanin, keratin, Langerhans cells and the subcutaneous fat. Then revise the absorption function to see how limited it is.`),
+Q(`Functions`, `Which statement about the skin's absorption function is correct?`,
+ [`The skin absorbs only small amounts of certain substances, such as some essential oils and medicated patches`, `The skin absorbs water easily, so bathing hydrates the body`, `The skin absorbs nothing at all`, `Most products absorb straight into the bloodstream`],
+ `The skin's barrier means absorption is limited. Small amounts of some substances can pass through, such as certain essential oils, some creams and medicated patches (for example nicotine or HRT patches).`,
+ `Revise the "A" in SHAPES + V. Think about why we must check product ingredients and client allergies, since some substances can pass into the skin.`),
+Q(`Functions`, `Why is the skin described as a sensory organ?`,
+ [`It contains nerve endings that detect touch, pressure, pain and temperature`, `It produces hormones that control mood`, `It contains taste receptors`, `It can see light through melanocytes`],
+ `The dermis is full of sensory nerve endings that tell the brain about touch, pressure, pain, heat and cold. This helps protect us from harm.`,
+ `Revise the "S" (sensation) in SHAPES + V. List the receptors and what each one detects, and link it to asking clients about pressure during a massage.`),
+Q(`Functions`, `Which function of the skin keeps the skin and hair soft, supple and partly waterproof?`,
+ [`Secretion of sebum`, `Excretion of sweat`, `Production of vitamin D`, `Sensation`],
+ `Secretion is the release of a useful substance. Sebaceous glands secrete sebum, which lubricates the skin and hair and helps stop water escaping.`,
+ `Look at the difference between secretion (useful substance released, sebum) and excretion (waste removed, sweat). Write one example of each.`),
+Q(`Functions`, `How does a suntan help protect the skin?`,
+ [`Melanocytes make more melanin, which absorbs some UV light`, `The dermis thickens to block the sun`, `Sebum production increases to reflect light`, `Sweat glands release a natural sunscreen`],
+ `UV exposure triggers melanocytes to produce more melanin. The extra pigment absorbs some UV rays, but a tan is a sign of skin damage and does not replace SPF.`,
+ `Revise melanin and the protective function. Then think about how you would explain to a client why a tan is not "healthy" and why daily SPF matters.`),
+
+// ---- Skin types ----
+Q(`Skin types`, `Which features are typical of a dry skin type?`,
+ [`Feels tight, small pores, fine texture and may have flaky patches`, `Shiny, enlarged pores and frequent blackheads`, `Oily T-zone with normal cheeks`, `Even, smooth texture with no visible problems`],
+ `Dry skin produces too little sebum. It often feels tight after cleansing, has small, tight pores and a fine texture, can look flaky, and may show fine lines early.`,
+ `Make a skin-types chart with columns for pores, texture, shine, common problems and how it feels. Fill it in for normal, dry, oily and combination skin.`),
+Q(`Skin types`, `Which features are typical of an oily skin type?`,
+ [`Shiny appearance, enlarged pores and a tendency to comedones`, `Tight feeling, small pores and flaking`, `Fine texture with lots of visible fine lines`, `Pale skin with no visible pores`],
+ `Oily skin has overactive sebaceous glands. It looks shiny, especially later in the day, with enlarged pores, a thicker texture and a tendency towards blackheads and spots.`,
+ `Link oily skin back to the sebaceous glands. Then revise which products and treatments you would recommend for it.`),
+Q(`Skin types`, `What does a combination skin usually look like?`,
+ [`An oily T-zone (forehead, nose and chin) with normal or dry cheeks`, `Oily everywhere except the eyelids`, `Dry all over with red patches`, `Oily cheeks with a dry T-zone`],
+ `Combination skin is oilier in the T-zone, where there are more sebaceous glands, and normal or dry on the cheeks and around the eyes.`,
+ `Sketch a face and shade the T-zone. Practise describing combination skin as you would on a consultation record.`),
+Q(`Skin types`, `What is the difference between dry skin and dehydrated skin?`,
+ [`Dry skin lacks oil (sebum); dehydrated skin lacks water`, `Dry skin lacks water; dehydrated skin lacks oil`, `They are the same thing`, `Dehydrated skin only affects mature clients`],
+ `Dry skin is a skin type caused by too little sebum. Dehydration is a skin condition caused by a lack of water, and any skin type can be dehydrated, even oily skin.`,
+ `Learn the difference between a skin type (what you are born with: normal, dry, oily, combination) and a skin condition (can change: dehydrated, sensitive, mature). Then add examples to your notes.`),
+Q(`Skin types`, `Which signs suggest a client has sensitive skin?`,
+ [`Reacts easily with redness and may show dilated capillaries`, `Very shiny with large pores`, `Thick texture with no reaction to products`, `Even colour with no visible capillaries`],
+ `Sensitive skin reacts quickly to products, heat or touch. It often has high colour and redness and may show telangiectasia (dilated capillaries), especially on the cheeks.`,
+ `Revise skin conditions alongside skin types. Note how you would adapt a treatment for sensitive skin: gentle products, less heat and lighter pressure.`),
+Q(`Skin types`, `Which features are typical of mature skin?`,
+ [`Loss of elasticity, lines and wrinkles, and thinner, drier skin`, `Enlarged pores and lots of blackheads`, `Extra collagen and a thicker dermis`, `Increased sebum and a shiny surface`],
+ `As skin ages, collagen and elastin decrease, cell renewal slows down and sebum production drops. This leads to lines, loss of firmness and drier, thinner skin.`,
+ `Link mature skin back to the dermis: revise what happens to fibroblasts, collagen and elastin with age.`),
+Q(`Skin types`, `What does the Fitzpatrick scale classify?`,
+ [`How skin reacts to UV light, from type I to type VI`, `How oily the skin is`, `How many sweat glands a client has`, `The thickness of the epidermis`],
+ `The Fitzpatrick scale groups skin into types I to VI based on its colour and how it reacts to UV, from type I (always burns, never tans) to type VI (deeply pigmented, rarely burns).`,
+ `Revise the six Fitzpatrick types and what each one means. It is used in consultations to judge how the skin may react to treatments that involve heat or light.`),
+
+// ---- Conditions ----
+Q(`Conditions`, `What are milia?`,
+ [`Small, hard, white cysts of trapped keratin under the skin`, `Blocked pores with a dark top`, `Areas of skin that have lost their colour`, `Dilated capillaries on the cheeks`],
+ `Milia are tiny, pearly white bumps of keratin trapped just under the surface. They are common around the eyes and cheeks and do not come to a head like a spot.`,
+ `Make a skin conditions picture board, with a photo and a short description of each one: milia, comedones, papules, pustules, telangiectasia and pigmentation.`),
+Q(`Conditions`, `Why does an open comedone (blackhead) look dark?`,
+ [`The sebum and keratin plug darkens when it is exposed to the air`, `It is filled with dirt`, `It contains blood`, `It is a type of mole`],
+ `A blackhead is a pore blocked with sebum and dead cells. The top of the plug is open to the air, which makes it oxidise and turn dark. It is not caused by dirt.`,
+ `Revise the difference between open comedones (blackheads) and closed comedones (whiteheads). This is a common myth to correct with clients.`),
+Q(`Conditions`, `What is hyperpigmentation?`,
+ [`Darker patches of skin caused by extra melanin`, `White patches caused by loss of melanin`, `Redness caused by dilated capillaries`, `Small white cysts of keratin`],
+ `Hyperpigmentation is when areas of skin become darker due to extra melanin. Examples include freckles, age spots and chloasma (often linked to hormones and pregnancy).`,
+ `"Hyper" means more and "hypo" means less. Revise pigmentation disorders in two groups: too much melanin (hyperpigmentation, chloasma) and too little (hypopigmentation, vitiligo).`),
+Q(`Conditions`, `What is vitiligo?`,
+ [`Patches of skin that have lost their pigment and look pale or white`, `A bacterial infection that causes crusting`, `Overactive sebaceous glands`, `A fungal infection of the skin`],
+ `Vitiligo is a condition where melanocytes stop producing melanin in some areas, leaving pale or white patches. It is not contagious, but the patches burn easily, so SPF is important.`,
+ `Revise pigmentation disorders and note that vitiligo is not infectious. Think about how you would discuss it sensitively in a consultation.`),
+Q(`Conditions`, `Impetigo is an example of which type of skin infection?`,
+ [`Bacterial`, `Viral`, `Fungal`, `Infestation`],
+ `Impetigo is a highly contagious bacterial infection that causes red sores with honey-coloured crusts. It is a contraindication, so treatment cannot go ahead.`,
+ `Make a contraindications table with four columns: bacterial (impetigo), viral (herpes simplex, warts), fungal (tinea) and infestation (scabies, head lice). Learn one sign of each.`),
+Q(`Conditions`, `Herpes simplex (a cold sore) is caused by what?`,
+ [`A virus`, `Bacteria`, `A fungus`, `An allergy`],
+ `Cold sores are caused by the herpes simplex virus. They are contagious, so an active cold sore in the treatment area is a contraindication.`,
+ `Add herpes simplex to your contraindications table under "viral". Revise why you must not treat over an active cold sore and how to refer the client.`),
+Q(`Conditions`, `Tinea (such as ringworm or athlete's foot) is caused by what?`,
+ [`A fungus`, `A virus`, `Bacteria`, `Too much sebum`],
+ `Tinea is a fungal infection. Ringworm shows as a red, ring-shaped scaly patch and athlete's foot affects the skin between the toes. Both are contagious.`,
+ `Despite its name, ringworm is not a worm. Add tinea to the "fungal" column of your contraindications table with its common forms.`),
+Q(`Conditions`, `What is telangiectasia?`,
+ [`Small dilated capillaries visible on the skin's surface`, `A raised, pus-filled spot`, `Loss of skin colour`, `A build-up of dead skin cells`],
+ `Telangiectasia are small, permanently dilated blood capillaries that show as fine red lines, often on the cheeks and nose. They are common in sensitive and mature skin.`,
+ `Link telangiectasia to the blood supply in the dermis and to sensitive skin. Revise how you would adapt a facial: avoid too much heat, friction and stimulation.`),
+Q(`Conditions`, `What is the difference between a papule and a pustule?`,
+ [`A papule is a small red raised spot; a pustule contains pus`, `A papule contains pus; a pustule does not`, `A papule is a blackhead; a pustule is a whitehead`, `They are both types of fungal infection`],
+ `A papule is a small, red, raised spot with no visible pus. A pustule is a raised spot with a yellow or white head of pus.`,
+ `Add papules and pustules to your skin conditions picture board. Practise describing what you can see using the correct terms, as you would on a consultation record.`)
+];
+
+/* ------------------------------------------------------------------
+   DAILY SET LOGIC — new set at 16:00 Europe/London every day
+------------------------------------------------------------------- */
+const PER_DAY = 5, RESET_HOUR = 16, TZ = 'Europe/London';
+const EPOCH = Date.UTC(2025, 0, 1) / 864e5;
+const fmtParts = new Intl.DateTimeFormat('en-GB', {timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'});
+function london(now){ const p = {}; fmtParts.formatToParts(now).forEach(x => p[x.type] = x.value); return {y:+p.year, m:+p.month, d:+p.day, h:(+p.hour)%24, mi:+p.minute, s:+p.second}; }
+function gameDay(now){ const p = london(now || new Date()); let n = Date.UTC(p.y, p.m-1, p.d)/864e5 - EPOCH; if (p.h < RESET_HOUR) n -= 1; return n; }
+function msToReset(now){ now = now || new Date(); const p = london(now); let rem = RESET_HOUR*3600 - (p.h*3600 + p.mi*60 + p.s); if (rem <= 0) rem += 86400; return rem*1000 - now.getMilliseconds(); }
+function dayDate(n){ return new Date((n + EPOCH) * 864e5); }
 const fmtDay = new Intl.DateTimeFormat('en-GB', {timeZone:'UTC', weekday:'short', day:'numeric', month:'short'});
 
 function rng(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function shuffle(arr, r){ const a = arr.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function sharedSet(Y, k){
-  const sets = Math.floor(BANK.length / PER), cycle = Math.floor(k / sets), pos = k % sets;
-  return shuffle(BANK.map((_, i) => i), rng(Y * 131 + cycle * 7919 + 11)).slice(pos * PER, pos * PER + PER);
+function setFor(n){
+  const sets = Math.floor(BANK.length / PER_DAY);
+  const cycle = Math.floor(n / sets), pos = ((n % sets) + sets) % sets;
+  const order = shuffle(BANK.map((_, i) => i), rng(cycle * 7919 + 20251));
+  return order.slice(pos * PER_DAY, pos * PER_DAY + PER_DAY);
 }
-const optionOrder = (serial, qid) => shuffle([0,1,2,3], rng(serial * 1009 + qid * 31 + 7));
+function optionOrder(n, qid){ return shuffle([0,1,2,3], rng(n * 1009 + qid * 31 + 7)); }
 
 /* ------------------------------------------------------------------
-   STORAGE AND SPACED REPEATS
-   A missed question becomes a "knowledge gap". It comes back in the
-   learner's next set, then 3 sets later, then 7 sets later. Three
-   correct answers in a row close the gap. A wrong answer starts again.
+   STORAGE
 ------------------------------------------------------------------- */
-const KEY = 'skinDeepYear.v1';
-const GAP_STEPS = [1, 3, 7], CLOSE_AFTER = 3;
+const KEY = 'skinDeepDaily.v1';
 let memory = null;
-function load(){ try { const raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw); } catch(e){} return memory || {}; }
+function load(){ try { const raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw); } catch(e){} return memory || {history:{}}; }
 function save(){ memory = state; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
-let state = load(); state.history = state.history || {}; state.gaps = state.gaps || {}; state.closedGaps = state.closedGaps || 0;
-
-function dueReviews(serial, shared){
-  return Object.keys(state.gaps).map(Number)
-    .filter(id => BANK[id] && state.gaps[id].due <= serial && !shared.includes(id))
-    .sort((a, b) => state.gaps[a].due - state.gaps[b].due || state.gaps[a].box - state.gaps[b].box || state.gaps[b].miss - state.gaps[a].miss)
-    .slice(0, CFG.reviewPerDay);
-}
-function recordAnswer(id, right, serial){
-  const g = state.gaps[id];
-  if (!right){ state.gaps[id] = {box:0, due:serial + GAP_STEPS[0], miss:(g ? g.miss : 0) + 1}; return 'opened'; }
-  if (!g) return null;
-  g.box++;
-  if (g.box >= CLOSE_AFTER){ delete state.gaps[id]; state.closedGaps++; return 'closed'; }
-  g.due = serial + GAP_STEPS[g.box]; return 'progress';
-}
+let state = load(); if (!state.history) state.history = {};
 
 /* ------------------------------------------------------------------
    RENDERING
 ------------------------------------------------------------------- */
+const app = document.getElementById('app'), live = document.getElementById('live');
 const LETTERS = ['A','B','C','D'];
-const TOPICS = ['Epidermis','Dermis','Subcutaneous','Appendages','Hair & nails','Functions','Skin types','Conditions','Skin health'];
-const TOPIC_LAYER = {Epidermis:'epi', Dermis:'derm', Subcutaneous:'sub', Appendages:'app', 'Hair & nails':'app'};
+const TOPIC_LAYER = {Epidermis:'epi', Dermis:'derm', Subcutaneous:'sub', Appendages:'app'};
 const TOPIC_TEXT = {
   Epidermis:'This question is about the <b>epidermis</b>, the outer layer of the skin.',
   Dermis:'This question is about the <b>dermis</b>, the living layer beneath the epidermis.',
   Subcutaneous:'This question is about the <b>subcutaneous layer</b>, the fatty layer beneath the dermis.',
   Appendages:'This question is about the <b>appendages</b>: hair follicles, sebaceous glands and sweat glands.',
-  'Hair & nails':'This question is about <b>hair and nails</b>, which grow from the skin.',
   Functions:'This question is about the <b>functions</b> of the skin, which use every layer.',
   'Skin types':'This question is about <b>skin types</b>, which you assess at the surface during consultation.',
-  Conditions:'This question is about <b>skin conditions</b> and contraindications you may see in the salon.',
-  'Skin health':'This question is about <b>skin health</b> and the factors that affect it.'
+  Conditions:'This question is about <b>skin conditions</b> and disorders you may see in the salon.'
 };
-let slot, target, nextOpen, view = 'start', qi = 0, answered = false;
-function refreshSlot(){ const now = new Date(); slot = slotAt(now); target = nextChange(now); nextOpen = nextOpenAt(now); }
-refreshSlot();
+let today = gameDay(), view = 'start', qi = 0, answered = false;
 
-function entry(){
-  if (slot.closed) return null;
-  let e = state.history[slot.serial];
-  if (!e){ const shared = sharedSet(slot.Y, slot.k), rv = dueReviews(slot.serial, shared); e = {qs: rv.concat(shared), rv, picks: [], done: false}; }
-  return e;
-}
-function persistEntry(e){ state.history[slot.serial] = e; save(); }
+function entry(){ let e = state.history[today]; if (!e){ e = {qs:setFor(today), picks:[], done:false}; } return e; }
+function persistEntry(e){ state.history[today] = e; save(); }
 
 function stats(){
-  const keys = Object.keys(state.history).map(Number), done = keys.filter(k => state.history[k].done);
-  let c = 0, n = 0; keys.forEach(k => state.history[k].picks.forEach(p => { n++; if (p === 0) c++; }));
-  let streak = 0;
-  if (!slot.closed){ let k = state.history[slot.serial] && state.history[slot.serial].done ? slot.serial : slot.serial - 1; while (state.history[k] && state.history[k].done){ streak++; k--; } }
-  else { let k = Math.max(-1, ...done); while (state.history[k] && state.history[k].done){ streak++; k--; } }
-  return {streak, days: done.length, acc: n ? Math.round(c / n * 100) : null, gaps: Object.keys(state.gaps).length};
+  const days = Object.keys(state.history).map(Number).filter(d => state.history[d].done);
+  let correct = 0, total = 0;
+  days.forEach(d => { const e = state.history[d]; e.picks.forEach(p => { total++; if (p === 0) correct++; }); });
+  let streak = 0, d = state.history[today] && state.history[today].done ? today : today - 1;
+  while (state.history[d] && state.history[d].done){ streak++; d--; }
+  return {streak, days: days.length, acc: total ? Math.round(correct / total * 100) : null};
 }
 function topicStats(){
   const out = {};
-  Object.values(state.history).forEach(e => e.picks.forEach((p, i) => { const q = BANK[e.qs[i]]; if (!q) return; const t = q.t; out[t] = out[t] || {c:0, n:0}; out[t].n++; if (p === 0) out[t].c++; }));
+  Object.values(state.history).forEach(e => e.picks.forEach((p, i) => { const t = BANK[e.qs[i]] ? BANK[e.qs[i]].t : null; if (!t) return; out[t] = out[t] || {c:0, n:0}; out[t].n++; if (p === 0) out[t].c++; }));
   return out;
 }
 function renderStats(){
@@ -338,14 +556,9 @@ function renderStats(){
   document.getElementById('st-streak').textContent = s.streak;
   document.getElementById('st-days').textContent = s.days;
   document.getElementById('st-acc').textContent = s.acc === null ? '–' : s.acc + '%';
-  document.getElementById('st-gaps').textContent = s.gaps;
 }
-function fmtLeft(ms){
-  const t = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
-  return (d ? d + 'd ' + h + 'h ' + String(m).padStart(2,'0') + 'm' : h + 'h ' + String(m).padStart(2,'0') + 'm ' + String(s).padStart(2,'0') + 's');
-}
-const clockHTML = () => '<span class="clock"><b data-clock>' + fmtLeft(nextOpen - new Date()) + '</b></span>';
-const whenHTML = () => '4:00pm on ' + fmtWhen.format(nextOpen);
+function clockHTML(){ return '<span class="clock" aria-live="off"><b data-clock>' + fmtLeft(msToReset()) + '</b></span>'; }
+function fmtLeft(ms){ const t = Math.max(0, Math.floor(ms / 1000)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60; return h + 'h ' + String(m).padStart(2,'0') + 'm ' + String(s).padStart(2,'0') + 's'; }
 
 function diagramSVG(){
   let fat = '';
@@ -387,74 +600,46 @@ function focusDiagram(topic){
 
 function render(){
   renderStats();
-  if (slot.closed){ view = 'closed'; renderClosed(); return; }
   const e = entry();
-  if (view === 'closed') view = 'start';
+  if (!e.done && e.picks.length >= e.qs.length && e.picks.every(p => p !== undefined && p !== null)){ e.done = true; persistEntry(e); renderStats(); }
   if (e.done) view = 'results';
   if (view === 'start') renderStart(e);
   else if (view === 'play') renderQuestion(e);
   else renderResults(e);
 }
 
-function gapsListHTML(limit){
-  const ids = Object.keys(state.gaps).map(Number).filter(id => BANK[id]).sort((a, b) => state.gaps[b].miss - state.gaps[a].miss).slice(0, limit || 999);
-  if (!ids.length) return '<p class="muted">You have no knowledge gaps right now. Every question you have missed has been answered correctly three times in a row.</p>';
-  return '<ul class="plan">' + ids.map(id => '<li class="tip"><strong>' + BANK[id].t + '</strong><span class="gq">' + BANK[id].q + '</span>' + BANK[id].s + '</li>').join('') + '</ul>';
-}
-function masteryHTML(){
-  const ts = topicStats();
-  return '<div class="mastery">' + TOPICS.map(t => {
-    const v = ts[t], pct = v ? Math.round(v.c / v.n * 100) : null;
-    return '<div class="mrow"><span>' + t + '</span><span class="bar" role="img" aria-label="' + t + ': ' + (pct === null ? 'no questions yet' : pct + ' percent correct') + '"><i style="width:' + (pct || 0) + '%"></i></span><span class="pct">' + (pct === null ? 'not yet' : pct + '%') + '</span></div>';
-  }).join('') + '</div>';
-}
-
-function renderClosed(){
-  const summer = slot.reason === 'summer';
-  app.innerHTML = '<section class="intro anim"><div>' +
-    '<span class="eyebrow">' + (summer ? 'Summer break' : 'Holiday break') + '</span>' +
-    '<h2>' + (summer ? 'See you in September' : 'No new questions during the break') + '</h2>' +
-    '<p class="lede">' + (summer ? 'Daily questions run on weekdays from September to the end of May.' : 'Daily questions pause during college holidays.') + ' The next set opens at ' + whenHTML() + ', in ' + clockHTML() + '.</p>' +
-    '<p class="lede">Your streak and progress are saved. If you want to keep revising, work through your knowledge gaps below.</p></div>' +
-    '<aside class="diagram"><figure>' + diagramSVG() + '<figcaption>Skin cross-section. During the quiz, the layer each question is about lights up.</figcaption></figure></aside></section>' +
-    '<section class="section"><h2>Your knowledge gaps</h2>' + gapsListHTML() + '</section>' +
-    '<section class="section"><h2>Your topic strengths</h2>' + masteryHTML() + '</section>';
-}
-
 function renderStart(e){
-  const started = e.picks.length > 0, n = e.qs.length, rv = e.rv.length;
+  const started = e.picks.length > 0;
   const topics = [...new Set(e.qs.map(i => BANK[i].t))];
+  const opened = fmtDay.format(dayDate(today)), closes = fmtDay.format(dayDate(today + 1));
   app.innerHTML = '<section class="intro anim">' +
-    '<div><h2>' + (started ? 'Pick up where you left off' : 'Your daily skin check') + '</h2>' +
+    '<div><h2>' + (started ? 'Pick up where you left off' : 'Five questions. One layer at a time.') + '</h2>' +
     '<p class="lede">Test what you know about the structure and functions of the skin. Every answer comes with an explanation, and if you get one wrong you will get advice on exactly what to revise.</p>' +
-    '<div class="setmeta"><span><b>Today\'s set:</b> ' + PER + ' class questions' + (rv ? ' plus <b>' + rv + ' review question' + (rv > 1 ? 's' : '') + '</b> you missed before' : '') + '.</span>' +
-    '<span>' + (slot.weekend ? 'This is Friday\'s set. It stays open over the weekend. ' : 'This set opened at 4:00pm on ' + fmtDay.format(utc(slot.open)) + '. ') + 'The next set opens at ' + whenHTML() + ', in ' + clockHTML() + '.</span></div>' +
+    '<div class="setmeta"><span><b>Today\'s set</b> opened at 4:00pm on ' + opened + '.</span><span>The next set arrives at 4:00pm on ' + closes + ', in ' + clockHTML() + '</span></div>' +
     '<div class="chips" aria-label="Topics in today\'s set">' + topics.map(t => '<span class="chip">' + t + '</span>').join('') + '</div>' +
-    '<div class="actions"><button class="btn" id="go" type="button">' + (started ? 'Continue: question ' + (e.picks.length + 1) + ' of ' + n : 'Start today\'s ' + n + ' questions') + '</button></div>' +
-    '<div class="how"><span>Questions you get wrong come back in later sets until you get them right three times in a row.</span><span>Tip: you can answer with the keys A to D or 1 to 4.</span></div></div>' +
+    '<div class="actions"><button class="btn" id="go" type="button">' + (started ? 'Continue: question ' + (e.picks.length + 1) + ' of 5' : 'Start today\'s 5 questions') + '</button></div>' +
+    '<div class="how"><span>Tip: you can answer with the keys A to D or 1 to 4.</span></div></div>' +
     '<aside class="diagram"><figure>' + diagramSVG() + '<figcaption>Skin cross-section. During the quiz, the layer each question is about lights up.</figcaption></figure></aside>' +
     '</section>';
   document.getElementById('go').onclick = () => { view = 'play'; qi = e.picks.length; answered = false; persistEntry(e); render(); app.focus(); };
 }
 
 function gaugeHTML(e, cur){
-  const n = e.qs.length;
-  return '<ol class="gauge" style="grid-template-columns:repeat(' + n + ',minmax(0,1fr))" aria-label="Progress">' + e.qs.map((_, i) => {
-    const f = n > 1 ? i / (n - 1) : 0, bg = f <= .5 ? 'color-mix(in srgb, var(--derm) ' + Math.round(f * 200) + '%, var(--epi))' : 'color-mix(in srgb, var(--sub) ' + Math.round((f - .5) * 200) + '%, var(--derm))';
-    const p = e.picks[i]; let cls = '', sym = String(i + 1), lab = 'Question ' + (i + 1) + (i < e.rv.length ? ' (review)' : '');
+  return '<ol class="gauge" aria-label="Progress">' + e.qs.map((_, i) => {
+    const p = e.picks[i]; let cls = '', sym = '', lab = 'Question ' + (i+1);
     if (p !== undefined){ cls = p === 0 ? 'ok' : 'bad'; sym = p === 0 ? '✓' : '✕'; lab += p === 0 ? ', correct' : ', incorrect'; }
-    else if (i === cur){ cls = 'cur'; lab += ', current'; }
-    return '<li class="' + cls + '" style="background:' + bg + '"><span aria-hidden="true">' + sym + '</span><span class="sr">' + lab + '</span></li>';
+    if (i === cur && p === undefined){ cls = 'cur'; sym = String(i+1); lab += ', current'; }
+    if (!sym) sym = String(i+1);
+    return '<li class="' + cls + '"><span aria-hidden="true">' + sym + '</span><span class="sr">' + lab + '</span></li>';
   }).join('') + '</ol>';
 }
 
 function renderQuestion(e){
-  const qid = e.qs[qi], q = BANK[qid], order = optionOrder(slot.serial, qid), isRv = qi < e.rv.length;
-  const g = state.gaps[qid];
-  app.innerHTML = '<div class="qhead"><span>Question <b>' + (qi + 1) + '</b> of ' + e.qs.length + '</span><span>Next set in ' + clockHTML() + '</span></div>' +
+  const qid = e.qs[qi], q = BANK[qid], order = optionOrder(today, qid);
+  app.innerHTML = '<div class="qhead"><span>Question <b>' + (qi+1) + '</b> of 5</span><span>Next set in ' + clockHTML() + '</span></div>' +
     gaugeHTML(e, qi) +
     '<section class="play">' +
-      '<div class="qcard anim" id="qcard"><div class="chips tight"><span class="chip">' + q.t + '</span>' + (isRv ? '<span class="chip rv">Review: you missed this before' + (g && g.box ? ' (' + g.box + ' of ' + CLOSE_AFTER + ' correct)' : '') + '</span>' : '') + '</div>' +
+      '<div class="qcard anim" id="qcard"><span class="chip">' + q.t + '</span>' +
       '<h2 class="qtext" id="qtext">' + q.q + '</h2>' +
       '<div class="opts" role="group" aria-labelledby="qtext">' + order.map((o, k) =>
         '<button class="opt" type="button" id="opt-' + k + '" data-o="' + o + '"><span class="key" aria-hidden="true">' + LETTERS[k] + '</span><span>' + q.o[o] + '</span><span class="mark"></span></button>').join('') +
@@ -468,24 +653,20 @@ function renderQuestion(e){
 function choose(e, o){
   if (answered) return; answered = true;
   const qid = e.qs[qi], q = BANK[qid], right = o === 0;
-  e.picks[qi] = o;
-  const gap = recordAnswer(qid, right, slot.serial);
-  persistEntry(e);
+  e.picks[qi] = o; persistEntry(e);
   app.querySelectorAll('.opt').forEach(b => {
     const v = +b.dataset.o; b.disabled = true;
     if (v === 0){ b.classList.add('correct'); b.querySelector('.mark').textContent = right ? 'Your answer ✓' : 'Correct answer'; }
     else if (v === o){ b.classList.add('wrong'); b.querySelector('.mark').textContent = 'Your answer'; }
     else b.classList.add('dim');
   });
-  let gapNote = '';
-  if (gap === 'opened') gapNote = '<p class="gapnote">This is now one of your knowledge gaps. It will come back in your next set.</p>';
-  else if (gap === 'progress') gapNote = '<p class="gapnote">Knowledge gap: ' + state.gaps[qid].box + ' of ' + CLOSE_AFTER + ' correct in a row. It will come back in ' + GAP_STEPS[state.gaps[qid].box] + ' sets\' time.</p>';
-  else if (gap === 'closed') gapNote = '<p class="gapnote">Knowledge gap closed. You have answered this correctly three times in a row.</p>';
-  const last = qi === e.qs.length - 1;
-  document.getElementById('fb').innerHTML = '<div class="feedback anim ' + (right ? 'ok' : 'bad') + '">' +
+  const last = qi === PER_DAY - 1;
+  if (last){ e.done = true; persistEntry(e); }
+  const fb = document.getElementById('fb');
+  fb.innerHTML = '<div class="feedback anim ' + (right ? 'ok' : 'bad') + '">' +
     '<h3 tabindex="-1" id="fb-h">' + (right ? 'Correct!' : 'Not quite. The answer is: ' + q.o[0]) + '</h3>' +
     '<p>' + q.e + '</p>' +
-    (right ? '' : '<div class="tip"><strong>Further study</strong>' + q.s + '</div>') + gapNote +
+    (right ? '' : '<div class="tip"><strong>Further study</strong>' + q.s + '</div>') +
     '<div><button class="btn" id="next" type="button">' + (last ? 'See my results' : 'Next question') + '</button></div></div>';
   document.getElementById('hint').hidden = true;
   const gw = app.querySelector('.gauge'); if (gw) gw.outerHTML = gaugeHTML(e, qi);
@@ -501,27 +682,37 @@ function choose(e, o){
   };
 }
 
+function message(score){
+  return ['Every expert started here. Work through your study plan below and you will see the difference tomorrow.',
+          'A start. Your study plan below shows exactly what to look at next.',
+          'Getting there. Spend ten minutes on your study plan and the rest will click.',
+          'Solid work. Tidy up the one or two gaps below and you will be flying.',
+          'So close. Check the one you missed and you have this topic nailed.',
+          'Perfect score. You really know your skin structure.'][score];
+}
+
 function renderResults(e){
-  const n = e.qs.length, score = e.picks.filter(p => p === 0).length, pct = score / n;
-  const rvN = e.rv.length, rvScore = e.picks.slice(0, rvN).filter(p => p === 0).length;
+  const score = e.picks.filter(p => p === 0).length;
   const wrong = e.picks.map((p, i) => p === 0 ? null : e.qs[i]).filter(x => x !== null);
-  const head = pct === 1 ? 'Brilliant!' : pct >= .6 ? 'Good effort!' : 'Keep going!';
-  const msg = pct === 1 ? 'Perfect score. You really know your skin structure.' : pct >= .6 ? 'Solid work. Tidy up the gaps below and you will be flying.' : 'Every expert started here. Work through your study plan below and you will see the difference.';
+  const ts = topicStats();
+  const topics = ['Epidermis','Dermis','Subcutaneous','Appendages','Functions','Skin types','Conditions'];
   app.innerHTML = '<div class="anim">' + gaugeHTML(e, -1) +
-    '<section class="result-top"><div class="score">' + score + '<small>/' + n + '</small></div>' +
-    '<div><h2>' + head + '</h2><p>' + msg + '</p>' + (rvN ? '<p>Review questions: ' + rvScore + ' of ' + rvN + ' correct.</p>' : '') + '</div></section>' +
+    '<section class="result-top"><div class="score">' + score + '<small>/5</small></div>' +
+    '<div><h2>' + (score === 5 ? 'Brilliant!' : score >= 3 ? 'Good effort!' : 'Keep going!') + '</h2><p>' + message(score) + '</p></div></section>' +
     (wrong.length ? '<section class="section"><h2>Your study plan</h2><ul class="plan">' + wrong.map(id =>
       '<li class="tip"><strong>' + BANK[id].t + '</strong>' + BANK[id].s + '</li>').join('') + '</ul></section>' : '') +
     '<section class="section"><h2>Today\'s answers</h2><div class="review">' + e.qs.map((id, i) => {
       const q = BANK[id], p = e.picks[i], ok = p === 0;
-      return '<details' + (ok ? '' : ' open') + '><summary><span class="dot ' + (ok ? 'ok' : 'bad') + '" aria-hidden="true">' + (ok ? '✓' : '✕') + '</span><span><span class="sr">' + (ok ? 'Correct: ' : 'Incorrect: ') + '</span>' + (i < rvN ? '<span class="chip rv sm">Review</span> ' : '') + q.q + '</span></summary>' +
+      return '<details' + (ok ? '' : ' open') + '><summary><span class="dot ' + (ok ? 'ok' : 'bad') + '" aria-hidden="true">' + (ok ? '✓' : '✕') + '</span><span><span class="sr">' + (ok ? 'Correct: ' : 'Incorrect: ') + '</span>' + q.q + '</span></summary>' +
         '<div class="body">' + (ok ? '' : '<p class="ans">You answered: <span>' + q.o[p] + '</span></p>') +
         '<p class="ans">Correct answer: <span>' + q.o[0] + '</span></p><p>' + q.e + '</p>' +
         (ok ? '' : '<div class="tip"><strong>Further study</strong>' + q.s + '</div>') + '</div></details>';
     }).join('') + '</div></section>' +
-    '<section class="section"><h2>Knowledge gaps</h2><p class="muted">' + Object.keys(state.gaps).length + ' to close, ' + state.closedGaps + ' closed so far. Missed questions come back in your next set, then 3 sets later, then 7 sets later. Three correct answers in a row close the gap.</p></section>' +
-    '<section class="section"><h2>Your topic strengths</h2>' + masteryHTML() + '</section>' +
-    '<div class="next"><span>Your next set opens at ' + whenHTML() + ' (UK time), in ' + clockHTML() + '</span></div></div>';
+    '<section class="section"><h2>Your topic strengths</h2><div class="mastery">' + topics.map(t => {
+      const v = ts[t]; const pct = v ? Math.round(v.c / v.n * 100) : null;
+      return '<div class="mrow"><span>' + t + '</span><span class="bar" role="img" aria-label="' + t + ': ' + (pct === null ? 'no questions yet' : pct + ' percent correct') + '"><i style="width:' + (pct || 0) + '%"></i></span><span class="pct">' + (pct === null ? 'not yet' : pct + '%') + '</span></div>';
+    }).join('') + '</div></section>' +
+    '<div class="next"><span>Your next 5 questions arrive at 4:00pm (UK time) in ' + clockHTML() + '</span></div></div>';
 }
 
 /* Keyboard shortcuts */
@@ -535,22 +726,21 @@ document.addEventListener('keydown', ev => {
 const zone = document.getElementById('reset-zone');
 function resetIdle(){ zone.innerHTML = '<button class="linkbtn" id="reset-btn" type="button">Reset my progress</button>'; document.getElementById('reset-btn').onclick = resetAsk; }
 function resetAsk(){
-  zone.innerHTML = '<span class="confirm"><span>Delete your streak, history and knowledge gaps?</span><button class="btn small danger" id="rs-yes" type="button">Yes, reset</button><button class="btn small ghost" id="rs-no" type="button">Cancel</button></span>';
-  document.getElementById('rs-yes').onclick = () => { state = {history:{}, gaps:{}, closedGaps:0}; save(); view = 'start'; qi = 0; answered = false; resetIdle(); render(); live.textContent = 'Progress reset.'; };
+  zone.innerHTML = '<span class="confirm"><span>Delete your streak and history?</span><button class="btn small danger" id="rs-yes" type="button">Yes, reset</button><button class="btn small ghost" id="rs-no" type="button">Cancel</button></span>';
+  document.getElementById('rs-yes').onclick = () => { state = {history:{}}; save(); view = 'start'; qi = 0; answered = false; resetIdle(); render(); live.textContent = 'Progress reset.'; };
   document.getElementById('rs-no').onclick = resetIdle;
   document.getElementById('rs-no').focus();
 }
 resetIdle();
 
-/* Clock tick and automatic roll-over */
+/* Clock tick and automatic roll-over at 4pm */
 setInterval(() => {
-  const now = new Date();
-  if (now >= target){ refreshSlot(); view = 'start'; qi = 0; answered = false; render(); live.textContent = slot.closed ? 'The quiz is now on a break.' : 'A new set of questions is ready.'; return; }
-  const t = fmtLeft(nextOpen - now);
+  const n = gameDay();
+  if (n !== today){ today = n; view = 'start'; qi = 0; answered = false; render(); live.textContent = 'A new set of questions is ready.'; return; }
+  const t = fmtLeft(msToReset());
   document.querySelectorAll('[data-clock]').forEach(el => el.textContent = t);
 }, 1000);
 
-window.__skinTest = {slotAt, nextChange, nextOpenAt, sharedSet, dueReviews, recordAnswer, get state(){ return state; }};
 render();
 })();
 </script>
